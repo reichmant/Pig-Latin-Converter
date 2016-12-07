@@ -1,0 +1,5 @@
+Bro... | Mikey smells...|  awful! ||This second input line demonstrates good-hearted punctuation recognition!|-1
+
+
+You can move this to the first line to test out character recognition (or rather, ignoring them):
+cat dog |$#-&^+%()* hello chugging Doug|Bugs mug a thug with awesome hugs!|-1
