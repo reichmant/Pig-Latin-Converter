@@ -39,15 +39,9 @@ _start_:
   @ Else, move on to the next word or "line".
   @−−−−−−−−−−−−−−−−−−−−−−−−−− KEY −−−−−−−−−−−−−−−−−−−−−−−−−−−
   @ r0 = return value of vowelChecker/consonantChecker OR thing to print
-  @ r1 =
-  @ r2 = observed character
+  @ r1 = allocated memory to store string
+  @ r2 = observed character, passed into charChecker
   @ r3 = i, the index of the first character of the current word
-  @ r4 =
-  @ r5 =
-  @ r6 =
-  @ r7 =
-  @ r8 =
-  @ r9 =
 @================================
 Conversion:
 	LDRB 	r2, [r1, r3]		@ load the i-th character into r2
@@ -85,9 +79,9 @@ foundConsonant:
   @−−−−−−−−−−−−−−−−−−−−−−−−−− KEY −−−−−−−−−−−−−−−−−−−−−−−−−−−
   @ r0 = character to be printed OR indicator of whether r2 is vowel/consonant/neither
   @ r1 = location of input string in memory
-  @ r2 = character to be passed into charChecker
-  @ r3 = i (passed in as the index of first letter of current word, returned as index of first character of the next)
-  @ r4 = n (a variable to measure incrementation so that we iterate over a whole word at a time)
+  @ r2 = observed character, to be passed into charChecker
+  @ r3 = i (passed in as the index of first letter of current word, returned as index of next character to be checked)
+  @ r4 = n (another incrementor to preserve i for later)
 @================================
 consonantConverter:
 @-------- usual stuff at beginning of function
@@ -100,7 +94,15 @@ consonantConverter:
 	STR		r8, [sp, #20]
 	STR		r9, [sp, #24]
 @--- Body
-	ADD 		r4, r3, #1 	@ make a copy of i+1 called n
+backupStartIndex:
+	MOV		r4, r3		@ make a copy of i called n, so we know where the first letter is later
+consonantStart:
+	LDRB 	r2, [r1, r4]	@ load list[n] into r2 to be checked
+	BL 		charChecker	@ find out what type of character i is now
+	CMP 		r0, #1		@ are we at the first vowel?
+	BEQ 		consonantLoop	@ if so, set the start value for the next loop to i
+	ADD		r4, r4, #1	@ n++
+	B		consonantStart
 consonantLoop:
 	LDRB 	r2, [r1, r4]	@ load list[n] into r2 to be checked
 	BL 		charChecker	@ find out what type of character n is now
@@ -110,7 +112,7 @@ consonantLoop:
 	SWI 		0x00			@ print it
 	ADD 		r4, r4, #1 	@ n++
 	B		consonantLoop
-consonantDeux:				@ by here, the entire word has been printed
+consonantDeux:				@ by here, the entire word (following first vowel, inclusive) has been printed
 	LDRB 	r2, [r1, r3]	@ load list[i] into r2 to be checked
 	BL 		charChecker	@ find out what type of character i is now
 	CMP 		r0, #1		@ are we at the first vowel?
@@ -145,7 +147,7 @@ consonantDone:
   @−−−−−−−−−−−−−−−−−−−−−−−−−− KEY −−−−−−−−−−−−−−−−−−−−−−−−−−−
   @ r0 = character to be printed OR indicator of whether r2 is vowel/consonant/neither
   @ r1 = location of input string in memory
-  @ r2 = n (a variable to measure incrementation so that we iterate over a whole word at a time)
+  @ r2 = observed character, to be passed into charChecker
   @ r3 = i (passed in as first letter of current word, returned as first of next word)
 @================================
 vowelConverter:
@@ -164,12 +166,12 @@ vowelLoop:
 	BL 		charChecker	@ find out what type of character i is now
 	CMP 		r0, #0		@ are we at the end of the word? (i.e. is the observed character is non-alphabetic?)
 	BEQ 		vowelDone		@ if so, move on
-	LDRB 	r0, [r1, r3]	@ else, load list[n] into r0 to be printed
+	LDRB 	r0, [r1, r3]	@ else, load list[i] into r0 to be printed
 	SWI 		0x00			@ print it
-	ADD 		r3, r3, #1 	@ n++
+	ADD 		r3, r3, #1 	@ i++
 	B		vowelLoop
 vowelDone:
-	MOV 		r0, #119		@ get ready to print "a"
+	MOV 		r0, #119		@ get ready to print "w"
 	SWI 		0x00			@ print it
 	MOV 		r0, #97		@ get ready to print "a"
 	SWI 		0x00			@ print it
@@ -219,12 +221,21 @@ possibleEnd:
 	ADD		r0, r0, #1		@ increment index of input character - this is safe because we don't care what r0 is afterwards
 	LDRB 	r2, [r1, r0]		@ load the next character after the "|"
 	CMP  	r2, #45             @ if the first letter of the first word is NOT "-" (we use ASCII)...
-	BNE  	goToReturn          @ continue searching for vowels/consonants
+	BNE  	Return        		@ continue searching for vowels/consonants
 	ADD		r0, r0, #1		@ increment index of input character - this is safe because it gets overwritten during return statement anyways
 	LDRB 	r2, [r1, r0]		@ load the next character after the "-"
 	CMP		r2, #49			@ if the character following the first of the line is "1"...
 	BEQ 		done				@ we're done
-goToReturn:
+Return:
+@------- usual stuff at end of function
+	LDR		lr, [sp]
+	LDR		r4, [sp, #4]
+	LDR		r5, [sp, #8]
+	LDR		r6, [sp, #12]
+	LDR		r7, [sp, #16]
+	LDR		r8, [sp, #20]
+	LDR		r9, [sp, #24]
+	ADD 		sp, sp, #28
 	BX		LR				@ look for vowels/consonants
 @≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣≣
 

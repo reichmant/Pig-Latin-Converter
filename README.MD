@@ -6,7 +6,9 @@ The program will replace words with their Pig Latin equivalent and only exit upo
 
 All letters will remain in their original case - capitalization is kept in tact. It's a feature, not a bug!
 
+Compare to: http://www.snowcrest.net/donnelly/piglatin.html
+
 ### Future plans:
-1. Change "consonant words" to begin at the vowel, not the character preceding them (in the case of >1 consonants prior to the first vowel). This kind of goes against the rule you set, but makes the words easier to pronounce if they begin with a "ch". Instead of just "placing" the initial consonants at the end, we're moving them.
+1. Properly capitalize output words - don't just move the capital around.
 2. Add ability to convert to a pirate language, replacing words like "you" with "ye" and "are" with "be".
-3. Something A-Level worthy?
+3. Something else A-Level worthy?
